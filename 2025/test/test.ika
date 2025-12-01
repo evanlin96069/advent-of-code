@@ -1,0 +1,15 @@
+#if !TEST_IKA
+#define TEST_IKA
+
+#include "libc.ika"
+
+fn assert_msg(cond: bool, msg: []u8) void {
+    if (cond) {
+        // prints the message followed by " PASS\n"
+        "[\x1b[0;32mPASS\x1b[0m] %s\n", msg;
+    } else {
+        "[\x1b[0;31mFAIL\x1b[0m] %s\n", msg;
+    }
+}
+
+#endif

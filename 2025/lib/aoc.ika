@@ -1,0 +1,10 @@
+#if !AOC
+#define AOC
+
+#include "libc.ika"
+#include "str.ika"
+#include "vec.ika"
+#include "vec_typed.ika"
+#include "io.ika"
+
+#endif

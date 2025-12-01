@@ -1,0 +1,240 @@
+#if !_STR_
+#define _STR_
+
+#include "libc.ika"
+
+struct Str {
+    ptr: []u8,
+    len: u32,
+};
+
+fn str_make(p: []u8, n: u32) Str {
+    var s: Str;
+    s.ptr = p;
+    s.len = n;
+    return s;
+}
+
+fn str_sub(s: Str, start_index: u32, end_index: u32) Str {
+    assert(start_index <= s.len);
+    assert(end_index <= s.len);
+    assert(start_index <= end_index);
+    s.ptr += start_index;
+    s.len = end_index - start_index;
+    return s;
+}
+
+fn str_span(p: []u8) Str {
+    var n: u32 = 0;
+    while (p[n] != '\0') {
+        n += 1;
+    }
+    return str_make(p, n);
+}
+
+fn str_eql(a: Str, b: Str) bool {
+    if (a.len != b.len) {
+        return false;
+    }
+
+    var i: u32 = 0;
+    while (i < a.len) : (i += 1) {
+        if (a.ptr[i] != b.ptr[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn str_starts_with(haystack: Str, needle: Str) bool {
+    if (needle.len > haystack.len) {
+        return false;
+    }
+    return str_eql(str_sub(haystack, 0, needle.len), needle);
+}
+
+fn str_ends_with(haystack: Str, needle: Str) bool {
+    if (needle.len > haystack.len) {
+        return false;
+    }
+    return str_eql(str_sub(haystack,
+                           haystack.len - needle.len,
+                           haystack.len),
+                   needle);
+}
+
+fn str_find_chars(s: Str, c: u8, index: *u32) bool {
+    var i: u32 = 0;
+    while (i < s.len) : (i += 1) {
+        if (s.ptr[i] == c) {
+            if (index != null) {
+                *index = i;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+fn str_trim(s: Str, chars_to_strip: Str) Str {
+    var begin: u32 = 0;
+    var end: u32 = s.len;
+    while (begin < end && str_find_chars(chars_to_strip, s.ptr[begin], null)) : (begin += 1) {}
+    while (end > begin && str_find_chars(chars_to_strip, s.ptr[end - 1], null)) : (end -= 1) {}
+    return str_sub(s, begin, end);
+}
+
+fn str_trim_end(s: Str, chars_to_strip: Str) Str {
+    var end: u32 = s.len;
+    while (end > 0 && str_find_chars(chars_to_strip, s.ptr[end - 1], null)) : (end -= 1) {}
+    return str_sub(s, 0, end);
+}
+
+fn str_trim_start(s: Str, chars_to_strip: Str) Str {
+    var begin: u32 = 0;
+    while (begin < s.len && str_find_chars(chars_to_strip, s.ptr[begin], null)) : (begin += 1) {}
+    return str_sub(s, begin, s.len);
+}
+
+struct SplitIterator {
+    buffer: Str,
+    delimiter: []u8,
+};
+
+fn str_split(s: Str, delimiter: []u8) SplitIterator {
+    var it: SplitIterator;
+    it.buffer = s;
+    it.delimiter = delimiter;
+    return it;
+}
+
+fn str_split_next(it: *SplitIterator, out: *Str) bool {
+    if (it == null || out == null) {
+        return false;
+    }
+
+    var buf: Str = it.buffer;
+    if (buf.len == 0) {
+        return false;
+    }
+
+    var d: Str = str_span(it.delimiter);
+    if (d.len == 0) {
+        return false;
+    }
+
+    if (d.len > buf.len) {
+        *out = buf;
+        it.buffer = str_sub(buf, buf.len, buf.len); // empty buffer
+        return true;
+    }
+
+    // naive search for delimiter
+    var limit: u32 = buf.len - d.len;
+    var i: u32 = 0;
+    while (i <= limit) : (i += 1) {
+        var candidate: Str = str_sub(buf, i, i + d.len);
+        if (str_eql(candidate, d)) {
+            *out = str_sub(buf, 0, i);
+            it.buffer = str_sub(buf, i + d.len, buf.len);
+            return true;
+        }
+    }
+
+    // delimiter not found
+    *out = buf;
+    it.buffer = str_sub(buf, buf.len, buf.len); // empty buffer
+    return true;
+}
+
+fn str_parse_u32(s: Str, out: *u32) bool {
+    if (out == null) {
+        return false;
+    }
+    if (s.len == 0) {
+        return false;
+    }
+
+    var value: u32 = 0;
+    var i: u32 = 0;
+
+    while (i < s.len) : (i += 1) {
+        var c: u8 = s.ptr[i];
+        if (c < '0' || c > '9') {
+            return false;
+        }
+
+        var digit: u32 = c - '0';
+
+        var new_value: u32 = value * 10 + digit;
+        if (new_value < value) {
+            return false; // overflow
+        }
+
+        value = new_value;
+    }
+
+    *out = value;
+    return true;
+}
+
+fn str_parse_i32(s: Str, out: *i32) bool {
+    if (out == null) {
+        return false;
+    }
+    if (s.len == 0) {
+        return false;
+    }
+
+    var i: u32 = 0;
+    var negative: bool = false;
+
+    // Optional minus sign
+    if (s.ptr[0] == '-') {
+        negative = true;
+        i = 1;
+
+        // lone '-' is invalid
+        if (s.len == 1) {
+            return false;
+        }
+    }
+
+    var value: u32 = 0;
+
+    while (i < s.len) : (i += 1) {
+        var c: u8 = s.ptr[i];
+        if (c < '0' || c > '9') {
+            return false;
+        }
+
+        var digit: u32 = c - '0';
+
+        var new_value: u32 = value * 10 + digit;
+        if (new_value < value) {
+            return false; // overflow in 32-bit
+        }
+
+        value = new_value;
+    }
+
+    if (negative) {
+        if (value > 2147483648) {
+            return false; // too negative
+        }
+        *out = -as(i32, value);
+    } else {
+        if (value > 2147483647) {
+            return false; // too large
+        }
+        *out = as(i32, value);
+    }
+
+    return true;
+}
+
+fn str_print(s: Str) void {
+    "%.*s\n", s.len, s.ptr;
+}
+
+#endif

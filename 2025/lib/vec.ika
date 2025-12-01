@@ -1,0 +1,74 @@
+#if !_VEC_
+#define _VEC_
+
+#include "libc.ika"
+
+struct Vec {
+    data: *void,
+    len: u32,
+    cap: u32,
+    elem_size: u32,
+};
+
+fn vec_new(elem_size: u32) Vec {
+    var v: Vec;
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+    v.elem_size = elem_size;
+    return v;
+}
+
+fn vec_reserve(v: *Vec, new_cap: u32) bool {
+    if (new_cap <= v.cap) {
+        return true;
+    }
+
+    var size: u32 = new_cap * v.elem_size;
+    var new_data: *void = realloc(v.data, size);
+    if (new_data == null) {
+        return false;
+    }
+
+    v.data = new_data;
+    v.cap = new_cap;
+    return true;
+}
+
+fn vec_push(v: *Vec, elem: *void) bool {
+    if (v.len == v.cap) {
+        var new_cap: u32;
+        if (v.cap == 0) {
+            new_cap = 16;
+        } else {
+            new_cap = v.cap * 2;
+        }
+
+        if (!vec_reserve(v, new_cap)) {
+            return false;
+        }
+    }
+
+    var dest: *void = as([]u8, v.data) + (v.len * v.elem_size);
+    memcpy(dest, elem, v.elem_size);
+    v.len += 1;
+
+    return true;
+}
+
+fn vec_get(v: *Vec, index: u32) *void {
+    assert(index < v.len);
+    return as([]u8, v.data) + (index * v.elem_size);
+}
+
+fn vec_free(v: *Vec) void {
+    if (v.data != null) {
+        free(v.data);
+    }
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+    v.elem_size = 0;
+}
+
+#endif

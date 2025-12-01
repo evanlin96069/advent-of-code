@@ -1,0 +1,98 @@
+#include "test.ika"
+#include "vec.ika"
+
+// 1) Basic creation
+var v: Vec = vec_new(sizeof(u32)); // element size 4 bytes (u32 / i32)
+assert_msg(v.data == null && v.len == 0 && v.cap == 0 && v.elem_size == 4,
+           "vec_new initializes fields");
+
+// 2) push and get single element
+var a: u32 = 42;
+var pushed: bool = vec_push(&v, &a);
+assert_msg(pushed == true && v.len == 1, "vec_push increases len to 1");
+
+var p0: *u32 = vec_get(&v, 0);
+assert_msg(*p0 == 42, "vec_get returns pushed value 42");
+
+// 3) push many elements to force growth and check values
+var ok: bool = true;
+var N: u32 = 100;
+var i: u32 = 1;
+while (i <= N) : (i += 1) {
+    var val: u32 = i;
+    if (!vec_push(&v, &val)) {
+        ok = false;
+        break;
+    }
+}
+assert_msg(ok && v.len == (1 + N), "push many elements succeeds and len correct");
+
+// verify values (first element was 42, then 1..100)
+var got_ok: bool = true;
+// check first element
+var fv: *u32 = vec_get(&v, 0);
+if (*fv != 42) got_ok = false;
+
+// check the sequence
+i = 1;
+while (i <= N) : (i += 1) {
+    var idx: u32 = 1 + (i - 1); // index of value i
+    var vptr: *u32 = vec_get(&v, idx);
+    if (*vptr != i) {
+        got_ok = false;
+        break;
+    }
+}
+assert_msg(got_ok, "all pushed values match expected sequence");
+
+// 4) reserve explicit capacity
+var old_cap: u32 = v.cap;
+var reserve_ok: bool = vec_reserve(&v, old_cap + 200);
+assert_msg(reserve_ok == true && v.cap >= old_cap + 200, "vec_reserve increases capacity");
+
+// 5) test with a struct element
+struct Point {
+    x: i32,
+    y: i32,
+};
+
+var pv: Vec = vec_new(sizeof(Point)); // two i32s = 8 bytes
+var pt1: Point;
+pt1.x = 3;
+pt1.y = 4;
+var pushed2: bool = vec_push(&pv, &pt1);
+assert_msg(pushed2 == true && pv.len == 1, "vec_push works for struct element");
+
+var ppoint: *Point = vec_get(&pv, 0);
+assert_msg(ppoint.x == 3 && ppoint.y == 4, "struct element values preserved");
+
+// 6) boundary checks: accessing out-of-range should assert — we can't catch assert here,
+//    but at least test that valid accesses near boundaries work. Push another struct.
+var pt2: Point;
+pt2.x = -1;
+pt2.y = 999;
+vec_push(&pv, &pt2);
+var p1: *Point = vec_get(&pv, 1);
+assert_msg(p1.x == -1 && p1.y == 999, "second struct element preserved");
+
+// 7) vec_free resets fields
+vec_free(&v);
+assert_msg(v.data == null && v.len == 0 && v.cap == 0 && v.elem_size == 0,
+           "vec_free resets numeric fields for int-vector");
+
+vec_free(&pv);
+assert_msg(pv.data == null && pv.len == 0 && pv.cap == 0 && pv.elem_size == 0,
+           "vec_free resets numeric fields for struct-vector");
+
+// 8) re-use after free: new vector should behave like fresh
+var v2: Vec = vec_new(sizeof(u32));
+var vv_ok: bool = vec_push(&v2, &a) && v2.len == 1 && *(as(*u32, vec_get(&v2, 0))) == 42;
+assert_msg(vv_ok, "vector usable after free (new instance works)");
+
+// 9) edge case: reserve smaller than current cap should be no-op and return true
+var curcap: u32 = v2.cap;
+var reserved_small: bool = vec_reserve(&v2, curcap); // should succeed and do nothing
+assert_msg(reserved_small == true && v2.cap == curcap, "reserve with <=cap is no-op and true");
+
+// All done
+"All tests complete\n";

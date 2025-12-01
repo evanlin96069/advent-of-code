@@ -1,0 +1,39 @@
+#if !_IO_
+#define _IO_
+
+#include "libc.ika"
+
+fn read_file(filename: []u8, out: *Str) bool {
+    if (filename == null || out == null) {
+        return false;
+    }
+
+    out.ptr = null;
+    out.len = 0;
+
+    var f: *FILE = fopen(filename, "rb");
+    if (f == null) {
+        return false;
+    }
+
+    fseek(f, 0, SEEK_END);
+    var sz: i32 = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    if (sz == 0) {
+        return true;
+    }
+
+    out.ptr = malloc(sz);
+    if (out.ptr == null) {
+        return false;
+    }
+
+    fread(out.ptr, 1, sz, f);
+    out.len = sz;
+
+    fclose(f);
+    return true;
+}
+
+#endif

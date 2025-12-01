@@ -1,0 +1,104 @@
+#include "test.ika"
+#include "str.ika"
+
+// 1) str_span, str_make, str_eql
+var s1: Str = str_span("hello world");
+var s2: Str = str_make("hello world", 11);
+assert_msg(s1.len == 11 && str_eql(s1, s2), "str_span / str_make / str_eql");
+
+// 2) str_sub
+var sub: Str = str_sub(s1, 6, 11); // "world"
+var expect_world: Str = str_span("world");
+assert_msg(str_eql(sub, expect_world), "str_sub yields 'world'");
+
+// 3) starts_with / ends_with
+assert_msg(str_starts_with(s1, str_span("hello")), "str_starts_with 'hello'");
+assert_msg(str_ends_with(s1, str_span("world")), "str_ends_with 'world'");
+
+// 4) str_find_chars
+var idx: u32 = 0;
+var found: bool = str_find_chars(s1, 'w', &idx);
+assert_msg(found && idx == 6, "str_find_chars finds 'w' at 6");
+
+// 5) trim / trim_start / trim_end
+var padded: Str = str_span("  \t abc \n ");
+var trimmed: Str = str_trim(padded, str_span(" \t\n\r"));
+assert_msg(str_eql(trimmed, str_span("abc")), "str_trim strips whitespace");
+
+var ts: Str = str_trim_start(padded, str_span(" \t\n\r"));
+assert_msg(str_starts_with(ts, str_span("abc")), "str_trim_start works");
+
+var te: Str = str_trim_end(padded, str_span(" \t\n\r"));
+assert_msg(str_ends_with(te, str_span("abc")), "str_trim_end works");
+
+// 6) split iterator: simple comma-separated
+var csv: Str = str_span("a,b,c");
+var it: SplitIterator = str_split(csv, ",");
+var tok: Str;
+
+var ok: bool = str_split_next(&it, &tok);
+assert_msg(ok && str_eql(tok, str_span("a")), "split token 1 == 'a'");
+
+ok = str_split_next(&it, &tok);
+assert_msg(ok && str_eql(tok, str_span("b")), "split token 2 == 'b'");
+
+ok = str_split_next(&it, &tok);
+assert_msg(ok && str_eql(tok, str_span("c")), "split token 3 == 'c'");
+
+ok = str_split_next(&it, &tok);
+assert_msg(ok == false, "split exhausted after 3 tokens");
+
+// 7) split with multiple-character delimiter
+var text: Str = str_span("one<>two<>three");
+var it2: SplitIterator = str_split(text, "<>");
+ok = str_split_next(&it2, &tok);
+assert_msg(ok && str_eql(tok, str_span("one")), "split multi-delim token 'one'");
+
+ok = str_split_next(&it2, &tok);
+assert_msg(ok && str_eql(tok, str_span("two")), "split multi-delim token 'two'");
+
+ok = str_split_next(&it2, &tok);
+assert_msg(ok && str_eql(tok, str_span("three")), "split multi-delim token 'three'");
+
+// 8) split when delimiter not present -> single token
+var no_delim: Str = str_span("nodividerhere");
+var it3: SplitIterator = str_split(no_delim, ",");
+ok = str_split_next(&it3, &tok);
+assert_msg(ok && str_eql(tok, no_delim), "split when delimiter missing returns whole buffer");
+
+ok = str_split_next(&it3, &tok);
+assert_msg(ok == false, "split exhausted when delimiter missing");
+
+// 9) parse unsigned u32
+var v_u: u32 = 0;
+var p_ok: bool = str_parse_u32(str_span("12345"), &v_u);
+assert_msg(p_ok && v_u == 12345, "str_parse_u32 parses 12345");
+
+p_ok = str_parse_u32(str_span("4294967295"), &v_u); // max u32
+assert_msg(p_ok && v_u == 4294967295, "str_parse_u32 parses u32 max");
+
+p_ok = str_parse_u32(str_span("4294967296"), &v_u); // overflow
+assert_msg(p_ok == false, "str_parse_u32 rejects overflow");
+
+// 10) parse signed i32
+var v_i: i32 = 0;
+var pi_ok: bool = str_parse_i32(str_span("12345"), &v_i);
+assert_msg(pi_ok && v_i == 12345, "str_parse_i32 parses +12345");
+
+pi_ok = str_parse_i32(str_span("-42"), &v_i);
+assert_msg(pi_ok && v_i == -42, "str_parse_i32 parses -42");
+
+pi_ok = str_parse_i32(str_span("2147483647"), &v_i); // INT32_MAX
+assert_msg(pi_ok && v_i == 2147483647, "str_parse_i32 parses INT32_MAX");
+
+pi_ok = str_parse_i32(str_span("-2147483648"), &v_i); // INT32_MIN
+assert_msg(pi_ok && v_i == -2147483648, "str_parse_i32 parses INT32_MIN");
+
+pi_ok = str_parse_i32(str_span("2147483648"), &v_i); // overflow
+assert_msg(pi_ok == false, "str_parse_i32 rejects overflow positive");
+
+pi_ok = str_parse_i32(str_span("-2147483649"), &v_i); // overflow negative
+assert_msg(pi_ok == false, "str_parse_i32 rejects overflow negative");
+
+// All done
+"All tests complete\n";

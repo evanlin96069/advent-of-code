@@ -1,0 +1,208 @@
+#if !_VEC_TYPED_
+#define _VEC_TYPED_
+
+#include "libc.ika"
+#include "str.ika"
+
+//
+// VecU32
+//
+struct VecU32 {
+    data: []u32,
+    len: u32,
+    cap: u32,
+};
+
+fn vecu32_new() VecU32 {
+    var v: VecU32;
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+    return v;
+}
+
+fn vecu32_reserve(v: *VecU32, new_cap: u32) bool {
+    if (new_cap <= v.cap) {
+        return true;
+    }
+
+    var elem_bytes: u32 = as(u32, sizeof(u32));
+    var size: u32 = new_cap * elem_bytes;
+
+    var new_data_void: *void = realloc(as(*void, v.data), size);
+    if (new_data_void == null) {
+        return false;
+    }
+
+    v.data = as([]u32, new_data_void);
+    v.cap = new_cap;
+    return true;
+}
+
+fn vecu32_push(v: *VecU32, value: u32) bool {
+    if (v.len == v.cap) {
+        var new_cap: u32;
+        if (v.cap == 0) {
+            new_cap = as(u32, 16);
+        } else {
+            new_cap = v.cap * 2;
+        }
+        if (!vecu32_reserve(v, new_cap)) {
+            return false;
+        }
+    }
+
+    v.data[v.len] = value;
+    v.len += 1;
+    return true;
+}
+
+fn vecu32_get(v: *VecU32, index: u32) *u32 {
+    assert(index < v.len);
+    return &v.data[index];
+}
+
+fn vecu32_free(v: *VecU32) void {
+    if (v.data != null) {
+        free(as(*void, v.data));
+    }
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+}
+
+//
+// VecI32
+//
+struct VecI32 {
+    data: []i32,
+    len: u32,
+    cap: u32,
+};
+
+fn veci32_new() VecI32 {
+    var v: VecI32;
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+    return v;
+}
+
+fn veci32_reserve(v: *VecI32, new_cap: u32) bool {
+    if (new_cap <= v.cap) {
+        return true;
+    }
+
+    var elem_bytes: u32 = as(u32, sizeof(i32));
+    var size: u32 = new_cap * elem_bytes;
+
+    var new_data_void: *void = realloc(as(*void, v.data), size);
+    if (new_data_void == null) {
+        return false;
+    }
+
+    v.data = as([]i32, new_data_void);
+    v.cap = new_cap;
+    return true;
+}
+
+fn veci32_push(v: *VecI32, value: i32) bool {
+    if (v.len == v.cap) {
+        var new_cap: u32;
+        if (v.cap == 0) {
+            new_cap = as(u32, 16);
+        } else {
+            new_cap = v.cap * 2;
+        }
+        if (!veci32_reserve(v, new_cap)) {
+            return false;
+        }
+    }
+
+    v.data[v.len] = value;
+    v.len += 1;
+    return true;
+}
+
+fn veci32_get(v: *VecI32, index: u32) *i32 {
+    assert(index < v.len);
+    return &v.data[index];
+}
+
+fn veci32_free(v: *VecI32) void {
+    if (v.data != null) {
+        free(as(*void, v.data));
+    }
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+}
+
+//
+// VecStr (stores copies of the Str struct; it does not duplicate the pointed-to bytes)
+//
+struct VecStr {
+    data: []Str,
+    len: u32,
+    cap: u32,
+};
+
+fn vecstr_new() VecStr {
+    var v: VecStr;
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+    return v;
+}
+
+fn vecstr_reserve(v: *VecStr, new_cap: u32) bool {
+    if (new_cap <= v.cap) {
+        return true;
+    }
+
+    var elem_bytes: u32 = as(u32, sizeof(Str));
+    var size: u32 = new_cap * elem_bytes;
+
+    var new_data_void: *void = realloc(as(*void, v.data), size);
+    if (new_data_void == null) {
+        return false;
+    }
+
+    v.data = as([]Str, new_data_void);
+    v.cap = new_cap;
+    return true;
+}
+
+fn vecstr_push(v: *VecStr, value: Str) bool {
+    if (v.len == v.cap) {
+        var new_cap: u32;
+        if (v.cap == 0) {
+            new_cap = as(u32, 16);
+        } else {
+            new_cap = v.cap * 2;
+        }
+        if (!vecstr_reserve(v, new_cap)) {
+            return false;
+        }
+    }
+
+    v.data[v.len] = value;
+    v.len += 1;
+    return true;
+}
+
+fn vecstr_get(v: *VecStr, index: u32) *Str {
+    assert(index < v.len);
+    return &v.data[index];
+}
+
+fn vecstr_free(v: *VecStr) void {
+    if (v.data != null) {
+        free(as(*void, v.data));
+    }
+    v.data = null;
+    v.len = 0;
+    v.cap = 0;
+}
+
+#endif

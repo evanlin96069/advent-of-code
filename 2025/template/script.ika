@@ -1,0 +1,22 @@
+#include "aoc.ika"
+
+var s: Str;
+if (!read_file("sample.txt", &s)) {
+    "Failed to read file\n";
+    return 1;
+}
+
+var line_it: SplitIterator = str_split(s, "\n");
+var line: Str;
+while (str_split_next(&line_it, &line)) {
+    "<%.*s>\n", line.len, line.ptr;
+}
+
+
+fn part1() void {}
+
+fn part2() void {}
+
+
+part1();
+part2();
