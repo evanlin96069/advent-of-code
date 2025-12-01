@@ -1,0 +1,78 @@
+#include "aoc.ika"
+
+var s: Str;
+if (!read_file("input.txt", &s)) {
+    "Failed to read file\n";
+    return 1;
+}
+
+var line_it: SplitIterator = str_split(s, "\n");
+var line: Str;
+
+var rotations: VecI32 = veci32_new();
+while (str_split_next(&line_it, &line)) {
+    var out: i32;
+    str_parse_i32(str_sub(line, 1, line.len), &out);
+    if (line.ptr[0] == 'L') {
+        out *= -1;
+    }
+    veci32_push(&rotations, out);
+}
+
+
+fn part1() void {
+    var dial: i32 = 50;
+    var count: u32 = 0;
+
+    var i: u32 = 0;
+    while (i < rotations.len) : (i += 1) {
+        var rot: i32 = rotations.data[i];
+        dial += rot % 100;
+        if (dial < 0) {
+            dial += 100;
+        }
+        if (dial > 99) {
+            dial -= 100;
+        }
+        // "%d\n", dial;
+        if (dial == 0) {
+            count += 1;
+        }
+    }
+    "count=%d\n", count;
+}
+
+fn part2() void {
+    var dial: i32 = 50;
+    var count: u32 = 0;
+
+    var i: u32 = 0;
+    while (i < rotations.len) : (i += 1) {
+        var rot: i32 = abs(rotations.data[i]);
+        var dir: i32;
+        if (rotations.data[i] < 0) {
+            dir = -1;
+        } else {
+            dir = 1;
+        }
+
+        // slow, but computer is fast enough anyway
+        while (rot > 0) : (rot -= 1) {
+            dial += dir;
+            if (dial < 0) {
+                dial += 100;
+            }
+            if (dial > 99) {
+                dial -= 100;
+            }
+            if (dial == 0) {
+                count += 1;
+            }
+        }
+    }
+    "count=%d\n", count;
+}
+
+
+part1();
+part2();
