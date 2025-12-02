@@ -9,7 +9,7 @@ if (!read_file("sample.txt", &s)) {
 var line_it: SplitIterator = str_split(s, "\n");
 var line: Str;
 while (str_split_next(&line_it, &line)) {
-    "<%.*s>\n", line.len, line.ptr;
+    str_print(line);
 }
 
 
