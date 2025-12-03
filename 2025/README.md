@@ -3,5 +3,8 @@ I plan to do this year in my programming language [ika](https://github.com/evanl
 
 Usage: `make day1` (or `make day5`, etc.)
 
-Kuroko:
- - day2: ika has no u64
+| Day | Part 1 | Part 2 |
+|---|---|---|
+| 1 | ika | ika |
+| 2 | Kuroko | Kuroko |
+| 3 | ika | Kuroko |

@@ -1,0 +1,63 @@
+#include "aoc.ika"
+
+var s: Str;
+if (!read_file("input.txt", &s)) {
+    "Failed to read file\n";
+    return 1;
+}
+
+var banks: VecStr = vecstr_new();
+
+var line_it: SplitIterator = str_split(s, "\n");
+var line: Str;
+while (str_split_next(&line_it, &line)) {
+    vecstr_push(&banks, line);
+}
+
+fn max_num(s: Str, index: *u32) u32 {
+    var max_index: u32 = 0;
+    var max: u32 = s.ptr[0] - '0';
+    var i: u32 = 1;
+    while (i < s.len) : (i += 1) {
+        var n: u32 = s.ptr[i] - '0';
+        if (n > max) {
+            max_index = i;
+            max = n;
+        }
+    }
+    if (index != null) {
+        *index = max_index;
+    }
+    return max;
+}
+
+fn getMaxjoltage(s: Str) u32 {
+    var i1: u32;
+    var num1: u32 = max_num(s, &i1);
+    var num2: u32;
+    if (i1 == s.len - 1) {
+        num2 = num1;
+        num1 = max_num(str_sub(s, 0, i1), null);
+    } else {
+        num2 = max_num(str_sub(s, i1 + 1, s.len), null);
+    }
+    return num1 * 10 + num2;
+}
+
+fn part1() void {
+    var count: u32 = 0;
+    var i: u32 = 0;
+    while (i < banks.len) : (i += 1) {
+        var max: u32 = getMaxjoltage(banks.data[i]);
+        count += max;
+    }
+    "count=%d\n", count;
+}
+
+fn part2() void {
+    // in kuroko:(
+}
+
+
+part1();
+part2();
