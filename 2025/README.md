@@ -8,3 +8,4 @@ Usage: `make day1` (or `make day5`, etc.)
 | 1 | ika | ika |
 | 2 | Kuroko | Kuroko |
 | 3 | ika | Kuroko |
+| 4 | ika | ika |

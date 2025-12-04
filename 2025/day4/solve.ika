@@ -1,0 +1,90 @@
+#include "aoc.ika"
+
+var s: Str;
+if (!read_file("input.txt", &s)) {
+    "Failed to read file\n";
+    return 1;
+}
+
+var grid: VecStr = vecstr_new();
+
+var line_it: SplitIterator = str_split(s, "\n");
+var line: Str;
+while (str_split_next(&line_it, &line)) {
+    vecstr_push(&grid, line);
+}
+
+var rows: u32 = grid.len;
+var cols: u32 = grid.data[0].len;
+
+fn get_pos(x: u32, y: u32) u32 {
+    if (x < 0 || x >= rows || y < 0 || y >= cols) {
+        return 0;
+    }
+
+    if (grid.data[x].ptr[y] == '.') {
+        return 0;
+    }
+    return 1;
+}
+
+fn remove_papers(dry_run: bool) u32 {
+    var count: u32 = 0;
+    var i: u32 = 0;
+    while (i < rows) : (i += 1) {
+        var j: u32 = 0;
+        while (j < cols) : (j += 1) {
+            if (grid.data[i].ptr[j] != '@') {
+                continue;
+            }
+            var neighbors: u32 = 0;
+            var x: i32 = -1;
+            while (x <= 1) : (x += 1) {
+                var y: i32 = -1;
+                while (y <= 1) : (y += 1) {
+                    if (x == 0 && y == 0) {
+                        continue;
+                    }
+                    neighbors += get_pos(i + x, j + y);
+                }
+            }
+            if (neighbors < 4) {
+                count += 1;
+                if (!dry_run) {
+                    grid.data[i].ptr[j] = 'x';
+                }
+            }
+        }
+    }
+
+    if (!dry_run) {
+        i = 0;
+        while (i < rows) : (i += 1) {
+            var j: u32 = 0;
+            while (j < cols) : (j += 1) {
+                if (grid.data[i].ptr[j] == 'x') {
+                    grid.data[i].ptr[j] = '.';
+                }
+            }
+        }
+    }
+    return count;
+}
+
+fn part1() void {
+    "count=%d\n", remove_papers(true);
+}
+
+fn part2() void {
+    var count: u32 = 0;
+    var removed: u32 = remove_papers(false);
+    while (removed > 0) {
+        count += removed;
+        removed = remove_papers(false);
+    }
+    "count=%d\n", count;
+}
+
+
+part1();
+part2();
