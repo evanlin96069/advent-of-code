@@ -1,0 +1,75 @@
+from fileio import open
+
+let ranges, ids
+
+with open("input.txt") as f:
+    ranges, ids = f.read().strip('\n').split('\n\n')
+    ranges = [tuple(map(int, r.split('-'))) for r in ranges.split('\n')]
+    ids = list(map(int, ids.split('\n')))
+
+# I don't really know what's going on.
+# Adding this makes the result correct but I thought it shouldn't matter.
+# There might still be bugs somewhere.
+ranges.sort()
+
+
+def part1():
+    let count = 0
+    for id in ids:
+        for start, end in ranges:
+            if start <= id <= end:
+                count += 1
+                break
+    print(count)
+
+
+def part2():
+    let used = []
+
+    def get_location(n):
+        let prev_end = 0
+        for i, p in enumerate(used):
+            let start, end = p
+            if start <= n <= end:
+                return i, True
+            if prev_end <= n < start:
+                return i, False
+            prev_end = end
+        return len(used), False
+
+
+    def add_used(start, end):
+        if len(used) == 0:
+            used.append((start, end))
+            return
+
+        let si, sw = get_location(start)
+        let ei, ew = get_location(end)
+
+        if si == len(used):
+            used.append((start, end))
+            return
+        if ei == 0 and !ew:
+            used[0:0] = [(start, end)]
+            return
+        if si == ei and sw and ew:
+            return
+
+        let ns = used[si][0] if sw else start
+        let ne = used[ei][1] if ew else end
+
+        used[si:ei+1] = [(ns, ne)]
+
+
+    for start, end in ranges:
+        add_used(start, end)
+
+    let count = 0
+    for start, end in used:
+        count += end - start + 1
+        print(start, end, end - start + 1)
+    print(count)
+
+
+part1()
+part2()
