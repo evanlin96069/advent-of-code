@@ -6,16 +6,29 @@ if (!read_file("sample.txt", &s)) {
     return 1;
 }
 
+var lines: VecStr = vecstr_new();
+
 var line_it: SplitIterator = str_split(s, "\n");
 var line: Str;
 while (str_split_next(&line_it, &line)) {
-    str_print(line);
+    vecstr_push(&lines, line);
 }
 
 
-fn part1() void {}
+fn part1() void {
+    var count: u32 = 0;
+    var i: u32 = 0;
+    while (i < lines.len) : (i += 1) {
+        str_print(lines.data[i]);
+    }
 
-fn part2() void {}
+    "count=%d\n", count;
+}
+
+fn part2() void {
+    var count: u32 = 0;
+    "count=%d\n", count;
+}
 
 
 part1();
