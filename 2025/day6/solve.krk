@@ -1,0 +1,46 @@
+from fileio import open
+
+
+let problems, ops
+
+with open("input.txt") as f:
+    let lines = f.read().strip('\n').split('\n')
+    ops = [op for op in lines[-1].split(' ') if op != '']
+    problems = lines[:-1]
+
+
+def calc(data):
+    let count = 0
+    for op, nums in zip(ops, data):
+        let result = nums[0]
+        for n in nums[1:]:
+            if op == '+':
+                result += n
+            elif op == '*':
+                result *= n
+        count += result
+    return count
+
+
+def part1():
+    let data = list(zip(*[[int(n) for n in l.split(' ') if n != ''] for l in problems]))
+    print(calc(data))
+
+
+def part2():
+    let data = []
+    let curr = []
+    for col in list(zip(*problems)):
+        if all(c == ' '  for c in col):
+            data.append(curr)
+            curr = []
+            continue
+        curr.append(int("".join(col).strip('')))
+    if curr:
+        data.append(curr)
+
+    print(calc(data))
+
+
+part1()
+part2()
