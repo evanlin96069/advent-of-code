@@ -1,0 +1,48 @@
+#include "aoc.ika"
+
+var s: Str;
+if (!read_file("input.txt", &s)) {
+    "Failed to read file\n";
+    return 1;
+}
+
+var lines: VecStr = vecstr_new();
+
+var line_it: SplitIterator = str_split(s, "\n");
+var line: Str;
+while (str_split_next(&line_it, &line)) {
+    vecstr_push(&lines, line);
+}
+
+
+fn part1() void {
+    var count: u32 = 0;
+    var i: u32 = 1;
+    while (i < lines.len) : (i += 1) {
+        var j: u32 = 0;
+        while (j < lines.data[i].len) : (j += 1) {
+            var curr: u8 = lines.data[i].ptr[j];
+            var up: u8 = lines.data[i - 1].ptr[j];
+            if (curr == '.') {
+                if (up == '|' || up == 'S') {
+                    lines.data[i].ptr[j] = '|';
+                }
+            } else if (curr == '^' && up == '|') {
+                // split
+                lines.data[i].ptr[j - 1] = '|';
+                lines.data[i].ptr[j + 1] = '|';
+                count += 1;
+            }
+        }
+    }
+
+    "count=%d\n", count;
+}
+
+fn part2() void {
+    // in Kuroko
+}
+
+
+part1();
+part2();
