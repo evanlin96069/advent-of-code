@@ -1,0 +1,78 @@
+from fileio import open
+
+let coords, sz
+
+with open("input.txt") as f:
+    coords = [tuple(map(int, l.split(','))) for l in f.read().strip('\n').split('\n')]
+    sz = len(coords)
+
+
+let dists = []
+for i in range(sz):
+    for j in range(i + 1, sz):
+        let dist = (coords[i][0] - coords[j][0]) ** 2 + (coords[i][1] - coords[j][1]) ** 2 + (coords[i][2] - coords[j][2]) ** 2
+        dists.append((dist, (i, j)))
+
+dists.sort(key=lambda x: x[0])
+
+
+def add_connection(circuits, pair):
+    let box1, box2 = pair
+    let set1, set2
+    for index, circuit in enumerate(circuits):
+        if set1 is None and box1 in circuit:
+            set1 = index
+        if set2 is None and box2 in circuit:
+            set2 = index
+        if set1 is not None and set2 is not None:
+            break
+
+    if set1 is None and set2 is None:
+        circuits.append({box1, box2})
+        return True
+
+    if set1 is not None and set2 is None:
+        circuits[set1].add(box2)
+        return True
+
+    if set1 is None and set2 is not None:
+        circuits[set2].add(box1)
+        return True
+
+    if set1 == set2:
+        return False
+
+    if len(circuits[set1]) < len(circuits[set2]):
+        set1, set2 = set2, set1
+
+    circuits[set1] |= circuits[set2]
+    del circuits[set2]
+    return True
+
+
+def part1():
+    let circuits = []
+    let N = 10 if sz == 20 else 1000
+
+    for dist, pair in dists[:N]:
+        add_connection(circuits, pair)
+
+    let top3 = reversed(sorted([len(s) for s in circuits]))
+    print(top3[0] * top3[1] * top3[2])
+
+
+def part2():
+    let circuits = []
+
+    let last_pair
+    for dist, pair in dists:
+        add_connection(circuits, pair)
+        last_pair = pair
+        if len(circuits[0]) == sz:
+            break
+
+    print(coords[last_pair[0]][0] * coords[last_pair[1]][0])
+
+
+part1()
+part2()
