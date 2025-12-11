@@ -1,0 +1,146 @@
+#include "aoc.ika"
+
+var s: Str;
+if (!read_file("input.txt", &s)) {
+    "Failed to read file\n";
+    return 1;
+}
+
+struct Node {
+    count: u32,
+    links: []u32,
+};
+
+const SIZE = 26 * 26 * 26;
+var map: [SIZE]*Node;
+
+// debug
+fn decode_name(name: u32) void {
+    var s: [4]u8;
+    var i: i32 = 2;
+    while (i >= 0) : (i -= 1) {
+        s[i] = (name % 26) + 'a';
+        name /= 26;
+    }
+    s[3] = 0;
+    "%s\n", &s;
+}
+
+fn encode_name(s: Str) u32 {
+    var result: u32 = 0;
+
+    var i: u32 = 0;
+    while (i < 3) : (i += 1) {
+        var c: u8 = s.ptr[i];
+        assert(c >= 'a' && c <= 'z');
+
+        result *= 26;
+        result += c - 'a';
+    }
+    return result;
+}
+
+var line_it: SplitIterator = str_split(s, "\n");
+var line: Str;
+while (str_split_next(&line_it, &line)) {
+    var name: u32 = encode_name(str_sub(line, 0, 3));
+    var links_count: u32 = (line.len - 4) / 4;
+
+    map[name] = malloc(sizeof(Node));
+    map[name].count = links_count;
+    map[name].links = malloc(links_count * sizeof(u32));
+
+    var p: []u8 = line.ptr + 5;
+    var i: u32 = 0;
+    while (i < links_count) : (i += 1) {
+        var link_name: Str = str_make(p, 3);
+        map[name].links[i] = encode_name(link_name);
+        p += 4;
+    }
+}
+
+var you: u32 = encode_name(str_span("you"));
+var out: u32 = encode_name(str_span("out"));
+var svr: u32 = encode_name(str_span("svr"));
+var dac: u32 = encode_name(str_span("dac"));
+var fft: u32 = encode_name(str_span("fft"));
+
+var neg1: u64;
+neg1.low = 0xFFFFFFFF;
+neg1.high = 0xFFFFFFFF;
+var zero: u64 = u64_from_u32(0);
+var one: u64 = u64_from_u32(1);
+
+const CACHE_SIZE = SIZE << 2;
+var cache: [CACHE_SIZE]u64; // name + dac + fft
+
+fn cache_init() void {
+    var i: u32 = 0;
+    while (i < CACHE_SIZE) : (i += 1) {
+        cache[i] = neg1;
+    }
+}
+
+fn cache_encode(name: u32, dac_visited: bool, fft_visited: bool) u32 {
+    var result: u32 = name << 2;
+    if (dac_visited) {
+        result |= 0x1;
+    }
+    if (fft_visited) {
+        result |= 0x2;
+    }
+    return result;
+}
+
+fn dfs(curr: u32, dac_visited: bool, fft_visited: bool) u64 {
+    var cache_index: u32 = cache_encode(curr, dac_visited, fft_visited);
+    if (u64_ne(cache[cache_index], neg1)) {
+        return cache[cache_index];
+    }
+
+    if (curr == out) {
+        var result: u64;
+        if (dac_visited && fft_visited) {
+            result = one;
+        } else {
+            result = zero;
+        }
+        cache[cache_index] = result;
+        return result;
+    }
+
+
+    if (curr == dac) {
+        dac_visited = true;
+    }
+    if (curr == fft) {
+        fft_visited = true;
+    }
+
+    var node: *Node = map[curr];
+    assert(node != null);
+
+    var count: u64 = u64_from_u32(0);
+    var i: u32 = 0;
+    while (i < node.count) : (i += 1) {
+        var next: u32 = node.links[i];
+        count = u64_add(count, dfs(next, dac_visited, fft_visited));
+    }
+
+    cache[cache_index] = count;
+    return count;
+}
+
+fn part1() void {
+    var count: u64 = dfs(you, true, true);
+    "count=%llu\n", count.low, count.high;
+}
+
+fn part2() void {
+    var count: u64 = dfs(svr, false, false);
+    "count=%llu\n", count.low, count.high;
+}
+
+cache_init();
+part1();
+part2();

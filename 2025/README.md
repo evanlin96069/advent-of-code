@@ -15,3 +15,4 @@ Usage: `make day1` (or `make day5`, etc.)
 | 8 | Kuroko | Kuroko |
 | 9 | Kuroko | Kuroko |
 | 10 | ika | Python |
+| 11 | ika | ika |
