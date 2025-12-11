@@ -6,5 +6,6 @@
 #include "vec.ika"
 #include "vec_typed.ika"
 #include "io.ika"
+#include "u64.ika"
 
 #endif
