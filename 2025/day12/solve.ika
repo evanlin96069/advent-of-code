@@ -1,0 +1,107 @@
+#include "aoc.ika"
+
+var s: Str;
+if (!read_file("input.txt", &s)) {
+    "Failed to read file\n";
+    return 1;
+}
+
+const SHAPE_COUNT = 6;
+
+var shapes_str: Str = str_sub(s, 0, 16 * SHAPE_COUNT);
+var lines_str: Str = str_sub(s, 16 * SHAPE_COUNT, s.len);
+
+var shapes: [SHAPE_COUNT][3][3]bool;
+var shape_areas: [SHAPE_COUNT]u32;
+
+fn parse_shapes() void {
+    var index: u32 = 0;
+    var p: []u8 = shapes_str.ptr;
+    while (index < SHAPE_COUNT) : (index += 1) {
+        p += 3;
+        var i: u32 = 0;
+        while (i < 3) : (i += 1) {
+            var j: u32 = 0;
+            while (j < 3) : (j += 1) {
+                if (p[0] == '#') {
+                    shapes[index][i][j] = true;
+                    shape_areas[index] += 1;
+                }
+                p += 1;
+            }
+            p += 1;
+        }
+        p += 1;
+    }
+}
+
+parse_shapes();
+
+struct Region {
+    w: u32,
+    h: u32,
+    counts: [SHAPE_COUNT]u32,
+    shape_count: u32,
+};
+
+var regions: Vec = vec_new(sizeof(Region));
+
+var line_it: SplitIterator = str_split(lines_str, "\n");
+var line: Str;
+while (str_split_next(&line_it, &line)) {
+    var r: Region;
+
+    var size_str: Str;
+    var nums_str: Str;
+    str_split_once(line, ": ", &size_str, &nums_str);
+
+    var w_str: Str;
+    var h_str: Str;
+    str_split_once(size_str, "x", &w_str, &h_str);
+    str_parse_u32(w_str, &r.w);
+    str_parse_u32(h_str, &r.h);
+
+    var i: u32 = 0;
+    r.shape_count = 0;
+    var nums_it: SplitIterator = str_split(nums_str, " ");
+    var n_str: Str;
+    while (i < SHAPE_COUNT && str_split_next(&nums_it, &n_str)) : (i += 1) {
+        str_parse_u32(n_str, &r.counts[i]);
+        r.shape_count += r.counts[i];
+    }
+    vec_push(&regions, &r);
+}
+
+fn part1() void {
+    var fit_count: u32 = 0;
+    var no_count: u32 = 0;
+    var maybe_count: u32 = 0;
+
+    var index: u32 = 0;
+    while (index < regions.len) : (index += 1) {
+        var r: *Region = vec_get(&regions, index);
+        if ((r.w / 3) * (r.h / 3) >= r.shape_count) {
+            fit_count += 1;
+            continue;
+        }
+
+        var area: u32 = 0;
+        var i: u32 = 0;
+        while (i < SHAPE_COUNT) : (i += 1) {
+            area += r.counts[i] * shape_areas[i];
+        }
+
+        if (area > r.w * r.h) {
+            no_count += 1;
+        } else {
+            maybe_count += 1;
+        }
+
+    }
+
+    "fit=%d\n", fit_count;
+    "not=%d\n", no_count;
+    "maybe=%d\n", maybe_count;
+}
+
+part1();
