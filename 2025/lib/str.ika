@@ -233,6 +233,39 @@ fn str_parse_i32(s: Str, out: *i32) bool {
     return true;
 }
 
+fn str_split_once(s: Str, delimiter: []u8, left: *Str, right: *Str) bool {
+    if (left == null || right == null) {
+        return false;
+    }
+
+    var d: Str = str_span(delimiter);
+    if (d.len == 0) {
+        return false;
+    }
+
+    if (d.len > s.len) {
+        *left = s;
+        *right = str_sub(s, s.len, s.len); // empty
+        return true;
+    }
+
+    var limit: u32 = s.len - d.len;
+    var i: u32 = 0;
+    while (i <= limit) : (i += 1) {
+        var candidate: Str = str_sub(s, i, i + d.len);
+        if (str_eql(candidate, d)) {
+            *left = str_sub(s, 0, i);
+            *right = str_sub(s, i + d.len, s.len);
+            return true;
+        }
+    }
+
+    // delimiter not found
+    *left = s;
+    *right = str_sub(s, s.len, s.len); // empty
+    return true;
+}
+
 fn str_print(s: Str) void {
     "%.*s\n", s.len, s.ptr;
 }
